@@ -10,6 +10,8 @@ M.config = {
   custom_language_formatting = {},
 }
 
+M.should_delete = {}
+
 local write_to_ipynb = function(event, output_extension)
   local ipynb_filename = event.match
   local jupytext_filename = utils.get_jupytext_file(ipynb_filename, output_extension)
@@ -68,7 +70,7 @@ end
 
 local read_from_ipynb = function(ipynb_filename)
   local metadata = utils.get_ipynb_metadata(ipynb_filename)
-  local ipynb_filename = vim.fn.resolve(vim.fn.expand(ipynb_filename))
+  ipynb_filename = vim.fn.resolve(vim.fn.expand(ipynb_filename))
 
   -- Decide output extension and style
   local custom_formatting, output_extension, to_extension_and_style = style_and_extension(metadata)
@@ -102,12 +104,13 @@ local read_from_ipynb = function(ipynb_filename)
 
   -- If jupytext version already existed then don't delete otherwise consider
   -- it to be sort of a temp file.
-  local should_delete = not jupytext_file_exists
+  M.should_delete[ipynb_filename] = not jupytext_file_exists
   vim.api.nvim_create_autocmd("BufUnload", {
     pattern = "<buffer>",
     group = "jupytext-nvim",
     callback = function(ev)
-      cleanup(ev.match, should_delete)
+      cleanup(ev.match, M.should_delete[ev.match])
+      M.should_delete[ev.match] = nil
     end,
   })
 
@@ -159,6 +162,23 @@ local read_from_ipynb = function(ipynb_filename)
   })
 end
 
+M.save_jupytext = function()
+  local buf = vim.api.nvim_get_current_buf()
+  local filename = vim.api.nvim_buf_get_name(buf)
+  if vim.fn.expand "%:e" == "ipynb" then
+    if M.should_delete[filename] then
+      M.should_delete[filename] = false
+    end
+    local metadata = utils.get_ipynb_metadata(filename)
+    local _, output_extension, _ = style_and_extension(metadata)
+    local jupytext_filename = utils.get_jupytext_file(filename, output_extension)
+    jupytext_filename = vim.fn.fnamemodify(jupytext_filename, ":t")
+    vim.notify("File saved: " .. jupytext_filename, vim.log.levels.INFO, { title = "Jupytext" })
+  else
+    vim.notify("Not a ipynb file", vim.log.levels.WARN, { title = "Jupytext" })
+  end
+end
+
 M.setup = function(config)
   vim.validate({ config = { config, "table", true } })
   M.config = vim.tbl_deep_extend("force", M.config, config or {})
@@ -176,6 +196,8 @@ M.setup = function(config)
       read_from_ipynb(ev.match)
     end,
   })
+
+  vim.api.nvim_create_user_command("JupytextSave", M.save_jupytext, { desc = "Save Jupytext file" })
 
   -- If we are using LazyVim make sure to run the LazyFile event so that the LSP
   -- and other important plugins get going
