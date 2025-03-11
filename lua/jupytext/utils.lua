@@ -6,6 +6,8 @@ local language_extensions = {
   r = "r",
   R = "r",
   bash = "sh",
+  javascript = "js",
+  typescript = "ts",
 }
 
 local language_names = {
