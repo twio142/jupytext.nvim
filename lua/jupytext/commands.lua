@@ -1,23 +1,39 @@
 local M = {}
 
-M.run_jupytext_command = function(input_file, options)
-  local cmd = "jupytext " .. input_file .. " "
+function M.run_jupytext(input_file, options, callback)
+  local cmd = {"jupytext", input_file}
+
   for option_name, option_value in pairs(options) do
+    table.insert(cmd, option_name)
     if option_value ~= "" then
-      cmd = cmd .. option_name .. "=" .. option_value .. " "
-    else
-      -- empty string value implies this options is just a flag
-      cmd = cmd .. option_name .. " "
+      table.insert(cmd, option_value)
     end
   end
 
-  local output = vim.fn.system(cmd)
+  local stdout_data = {}
+  local stderr_data = {}
 
-  if vim.v.shell_error ~= 0 then
-    print(output)
-    vim.notify(cmd .. ": " .. vim.v.shell_error, vim.log.levels.ERROR, { title = "Jupytext" })
-    return
-  end
+  vim.fn.jobstart(cmd, {
+    on_stdout = function(_, data, _)
+      if data then
+        vim.list_extend(stdout_data, data)
+      end
+    end,
+    on_stderr = function(_, data, _)
+      if data then
+        vim.list_extend(stderr_data, data)
+      end
+    end,
+    on_exit = function(_, exit_code, _)
+      if exit_code ~= 0 then
+        local error_msg = table.concat(stderr_data, "\n")
+        vim.notify("jupytext command failed: " .. error_msg, vim.log.levels.ERROR, { title = "Jupytext" })
+      end
+      if callback then
+        callback(exit_code == 0)
+      end
+    end,
+  })
 end
 
 return M

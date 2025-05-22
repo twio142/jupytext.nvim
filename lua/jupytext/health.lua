@@ -1,6 +1,6 @@
 local M = {}
 
-M.check = function()
+function M.check()
   vim.health.start "jupytext.nvim"
   vim.fn.system "jupytext --version"
 

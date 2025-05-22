@@ -14,7 +14,7 @@ local language_names = {
   python3 = "python",
 }
 
-M.get_ipynb_metadata = function(filename)
+function M.get_ipynb_metadata(filename)
   local metadata = vim.json.decode(io.open(filename, "r"):read "a")["metadata"]
   local language = metadata.kernelspec.language
   if language == nil then
@@ -25,12 +25,12 @@ M.get_ipynb_metadata = function(filename)
   return { language = language, extension = extension }
 end
 
-M.get_jupytext_file = function(filename, extension)
+function M.get_jupytext_file(filename, extension)
   local fileroot = vim.fn.fnamemodify(filename, ":r")
   return fileroot .. "." .. extension
 end
 
-M.check_key = function(tbl, key)
+function M.check_key(tbl, key)
   for tbl_key, _ in pairs(tbl) do
     if tbl_key == key then
       return true

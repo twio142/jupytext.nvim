@@ -1,2 +1,1 @@
 - Some escape hatch for when things go south
-- Make the call to write notebook async
