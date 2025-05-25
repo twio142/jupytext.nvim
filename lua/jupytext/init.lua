@@ -20,7 +20,8 @@ local function write_to_ipynb(event, output_extension)
   vim.cmd.write({ jupytext_filename, bang = true })
   local buf = vim.api.nvim_get_current_buf()
 
-  commands.run_jupytext(jupytext_filename, {
+  commands.run_jupytext({
+    jupytext_filename,
     ["--update"] = "",
     ["--to"] = "ipynb",
     ["--output"] = ipynb_filename,
@@ -177,7 +178,8 @@ local function read_from_ipynb(ipynb_filename)
       )
       local choice = vim.fn.confirm(msg, "&Refresh\n&No", 2)
       if choice == 1 then
-        commands.run_jupytext(ipynb_filename, {
+        commands.run_jupytext({
+          ipynb_filename,
           ["--to"] = to_extension_and_style,
           ["--output"] = jupytext_filename,
         }, function(ok)
@@ -192,7 +194,8 @@ local function read_from_ipynb(ipynb_filename)
       load_buffer()
     end
   else
-    commands.run_jupytext(ipynb_filename, {
+    commands.run_jupytext({
+      ipynb_filename,
       ["--to"] = to_extension_and_style,
       ["--output"] = jupytext_filename,
     }, function(ok)

@@ -1,12 +1,16 @@
 local M = {}
 
-function M.run_jupytext(input_file, options, callback)
-  local cmd = {"jupytext", input_file}
+function M.run_jupytext(args, callback)
+  local cmd = { "jupytext" }
 
-  for option_name, option_value in pairs(options) do
-    table.insert(cmd, option_name)
-    if option_value ~= "" then
-      table.insert(cmd, option_value)
+  for key, value in pairs(args) do
+    if type(key) == "number" then
+      table.insert(cmd, value)
+    else
+      table.insert(cmd, key)
+      if value ~= "" then
+        table.insert(cmd, value)
+      end
     end
   end
 
